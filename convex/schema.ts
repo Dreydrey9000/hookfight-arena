@@ -44,9 +44,9 @@ export default defineSchema({
     creditsResetAt: v.number(), // ms epoch when the daily count resets
   }).index("by_auth_user", ["authUserId"]),
 
-  // One row per battle the user runs.
+  // One row per battle the user runs. userId optional = anonymous-first v1.
   battles: defineTable({
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
     title: v.string(),
     audience: v.string(), // e.g. "B2B founders on LinkedIn"
     platform: v.string(), // e.g. "linkedin" | "x" | "instagram"

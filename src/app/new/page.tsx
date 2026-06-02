@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import {
   PLATFORMS,
   AUDIENCE_PRESETS,
@@ -12,11 +15,13 @@ import {
 import { parseHooks } from "@/lib/parseHooks";
 
 export default function NewBattlePage() {
+  const router = useRouter();
+  const createBattle = useMutation(api.battles.createBattle);
   const [platform, setPlatform] = useState<PlatformId>("linkedin");
   const [audience, setAudience] = useState<string>(AUDIENCE_PRESETS[0]);
   const [raw, setRaw] = useState<string>(STARTER_HOOKS.linkedin);
   const [error, setError] = useState<string | null>(null);
-  const [ready, setReady] = useState<string[] | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const parsed = parseHooks(raw);
   const count = parsed.hooks.length;
@@ -28,18 +33,26 @@ export default function NewBattlePage() {
     if (isStarter || raw.trim() === "") setRaw(STARTER_HOOKS[id]);
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const result = parseHooks(raw);
     if (result.error) {
       setError(result.error);
-      setReady(null);
       return;
     }
     setError(null);
-    // Backend (Convex mutation + runAI scoring) lands next — for now we confirm
-    // the validated battle payload so the form is verifiable end-to-end.
-    setReady(result.hooks);
+    setSubmitting(true);
+    try {
+      const { battleId } = await createBattle({
+        audience,
+        platform,
+        hooks: result.hooks,
+      });
+      router.push(`/b/${battleId}`);
+    } catch {
+      setError("Couldn't start the battle. Try again.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -132,29 +145,12 @@ export default function NewBattlePage() {
 
         <button
           type="submit"
-          disabled={!!parsed.error}
+          disabled={!!parsed.error || submitting}
           className="w-full rounded-lg bg-amber-500 px-4 py-3 font-bold text-neutral-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Start the fight →
+          {submitting ? "Starting the fight…" : "Start the fight →"}
         </button>
       </form>
-
-      {ready && (
-        <div className="mt-8 rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
-          <p className="text-sm font-semibold text-amber-300">
-            Battle ready · {ready.length} hooks vs {audience} on {platform}
-          </p>
-          <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-neutral-300">
-            {ready.map((h, i) => (
-              <li key={i}>{h}</li>
-            ))}
-          </ol>
-          <p className="mt-4 text-xs text-neutral-500">
-            Next: this submits to a Convex mutation that burns 1 credit and runs
-            the persona scoring. Backend wiring lands once Convex is connected.
-          </p>
-        </div>
-      )}
     </main>
   );
 }
