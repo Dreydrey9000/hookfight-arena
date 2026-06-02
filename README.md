@@ -1,5 +1,8 @@
 # HookFight Arena
 
+**▶ LIVE: https://hookfight-arena.vercel.app** — Convex prod `merry-ibex-277`, Groq AI scoring, verified end-to-end (2026-06-02).
+
+
 **Paste your social hooks → 4 AI audience personas score & roast them → they fight down to a winner in a bracket → you get 3 sharper rewrites + a shareable card.**
 
 It's a hook-testing game whose output is a screenshot people want to post — which is the marketing engine for the product itself.
