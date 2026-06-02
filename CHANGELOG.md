@@ -15,3 +15,7 @@ Format: `## [YYYY-MM-DD]` with Added/Changed/Fixed/Removed. One line per change,
 
 ### Changed
 - Pinned all dependency versions exactly (no `^`/`~`) and committed the lockfile — supply-chain hygiene + reproducible installs.
+- Auth switched from Clerk to **Convex Auth** (`@convex-dev/auth`) — Drey's stack standard; no third-party auth service, secrets live in Convex env. Schema `users.clerkId` → `authUserId` (provider-neutral subject).
+
+### Removed
+- `@clerk/nextjs` dependency and all Clerk references — not used; replaced by Convex Auth (to be wired next session).

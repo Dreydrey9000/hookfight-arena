@@ -151,8 +151,7 @@ export default function NewBattlePage() {
           </ol>
           <p className="mt-4 text-xs text-neutral-500">
             Next: this submits to a Convex mutation that burns 1 credit and runs
-            the persona scoring. Backend wiring lands once Convex + Clerk keys
-            are connected.
+            the persona scoring. Backend wiring lands once Convex is connected.
           </p>
         </div>
       )}

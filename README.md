@@ -4,7 +4,7 @@
 
 It's a hook-testing game whose output is a screenshot people want to post — which is the marketing engine for the product itself.
 
-This is **Build #1** of a 7-app slate, and it deliberately **forges the shared chassis** every later web app copies-and-skins: Next.js + Convex + Clerk + Stripe + the `runAI()` model router + credit-metering + the preview-before-paid gate + OG share cards.
+This is **Build #1** of a 7-app slate, and it deliberately **forges the shared chassis** every later web app copies-and-skins: Next.js + Convex + Convex Auth + Stripe + the `runAI()` model router + credit-metering + the preview-before-paid gate + OG share cards.
 
 ---
 
@@ -24,7 +24,7 @@ Landing (/)  →  Setup (/new)  →  burn 1 credit  →  AI persona scoring (run
 |---|---|---|
 | Framework | **Next.js 16** (App Router, Turbopack) | One framework for UI + API + serverless AI calls; free on Vercel Hobby. |
 | Database | **Convex** | Typed DB + reactive queries + crons in one; the "battle running → results" updates feel live for free. |
-| Auth | **Clerk** | House default — never roll your own. Anonymous-friendly so a visitor runs 1 battle before sign-up. |
+| Auth | **Convex Auth** (`@convex-dev/auth`) | Built into Convex — no third-party auth service. Anonymous-friendly so a visitor runs 1 battle before sign-up. |
 | Payments | **Stripe Checkout** | Hosted page = least code, PCI handled; we only verify the webhook signature. |
 | Validation | **Zod** | Every AI response is validated; bad JSON fails the battle cleanly instead of rendering half a bracket. |
 | Share card | **`next/og`** (built into Next 16) | Generates the screenshot artifact from HTML at the edge — this IS the viral loop. |
@@ -46,7 +46,7 @@ pnpm dev                        # http://localhost:3000
 See `.env.example` for the annotated list. You need accounts for:
 
 - **Convex** — `pnpm convex` writes `CONVEX_DEPLOYMENT` + `NEXT_PUBLIC_CONVEX_URL` for you.
-- **Clerk** (dashboard.clerk.com) — `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`.
+- **Convex Auth** — no external service; secrets live in Convex env (`npx convex env set ...`). Only `SITE_URL` lives here.
 - **AI provider** — `AI_API_KEY` (+ optional `AI_MODEL`, `AI_BASE_URL`). Any OpenAI-compatible endpoint.
 - **Stripe** (dashboard.stripe.com, TEST mode) — `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`.
 
@@ -81,6 +81,6 @@ test/
 
 **Done & verified:** scaffold, schema, personas, bracket logic (6/6 tests pass), `runAI()` router with stub mode, the `/new` setup form + landing — `pnpm build` is green.
 
-**Needs your keys / next session:** `pnpm convex` to deploy the schema; Clerk + AI + Stripe keys in `.env.local`; then wire the create-battle mutation, the persona-scoring call, the results screen, the OG share card, credit-metering, and Stripe Checkout (Days 2–3 in `~/Desktop/manus-burn-20260602/frivolous/PLAN.md`).
+**Needs your keys / next session:** `pnpm convex` to deploy the schema; AI + Stripe keys in `.env.local`; install + wire **Convex Auth** (`@convex-dev/auth`); then build the create-battle mutation, the persona-scoring call, the results screen, the OG share card, credit-metering, and Stripe Checkout (Days 2–3 in `~/Desktop/manus-burn-20260602/frivolous/PLAN.md`).
 
-> **Next 16 note:** auth middleware goes in `proxy.ts` (not `middleware.ts`), and `cookies`/`headers`/`params` are async. Wire Clerk's `clerkMiddleware` in `proxy.ts` when you add the auth gate.
+> **Next 16 note:** auth middleware goes in `proxy.ts` (not `middleware.ts`), and `cookies`/`headers`/`params` are async. Wire Convex Auth's `convexAuthNextjsMiddleware` in `proxy.ts` when you add the auth gate.

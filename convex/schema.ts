@@ -34,13 +34,15 @@ export const battleStatusValidator = v.union(
 
 export default defineSchema({
   // One row per signed-in person. Credits are the cost ceiling (free = 3/day).
+  // authUserId is the Convex Auth subject (set when we wire @convex-dev/auth).
+  // When auth is wired, these app fields may fold into the authTables users row.
   users: defineTable({
-    clerkId: v.string(),
+    authUserId: v.string(),
     email: v.string(),
     plan: planValidator,
     creditsToday: v.number(),
     creditsResetAt: v.number(), // ms epoch when the daily count resets
-  }).index("by_clerk_id", ["clerkId"]),
+  }).index("by_auth_user", ["authUserId"]),
 
   // One row per battle the user runs.
   battles: defineTable({
