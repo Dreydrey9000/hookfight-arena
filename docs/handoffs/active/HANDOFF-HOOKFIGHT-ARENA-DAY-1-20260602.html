@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handoff · HookFight Arena Day 1</title>
+<!-- Single-file session handoff. Dual-purpose: visual dashboard for Drey (VARK) + complete resume context for the next Claude session. Opens offline; fonts degrade to system. No emoji (Drey's rule). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B0D; --panel:#141417; --panel2:#1B1B1F; --line:#2A2A30;
+    --bone:#F4F1EC; --mute:#9A958C; --gold:#C2A878; --gold-dim:#7d6e4f;
+    --done:#5ec98b; --now:#C2A878; --next:#6aa6e8;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:'Big Shoulders Display','Arial Narrow',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--bone);font-family:var(--mono);
+    line-height:1.55;font-size:14px;-webkit-font-smoothing:antialiased;
+    padding:32px 20px 80px;max-width:980px;margin:0 auto;
+    animation:fade .5s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+  a{color:var(--gold)}
+  .goldline{height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    border-radius:3px;margin:0 0 22px}
+  h1{font-family:var(--disp);font-weight:800;font-size:42px;line-height:1;
+    letter-spacing:.5px;margin:0 0 6px;text-transform:uppercase}
+  h1 .sub{color:var(--gold)}
+  .meta{color:var(--mute);font-size:12.5px;margin-bottom:4px}
+  .meta b{color:var(--bone);font-weight:500}
+  .badge{display:inline-block;font-family:var(--disp);font-weight:700;font-size:13px;
+    letter-spacing:1px;text-transform:uppercase;padding:3px 12px;border-radius:20px;
+    border:1px solid var(--gold-dim);color:var(--gold);background:#1a160f}
+  .badge.blocked{color:#e8896a;border-color:#7d4f3f;background:#1f1310}
+  .badge.done{color:var(--done);border-color:#3f7d57;background:#10190f}
+
+  /* ---- the VARK diagram: 3-stage pipeline ---- */
+  .legend{color:var(--mute);font-size:11.5px;margin:26px 0 8px;text-transform:uppercase;letter-spacing:1.5px}
+  .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:0;margin-bottom:8px}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;
+    transition:transform .15s,border-color .15s}
+  .stage:hover{transform:translateY(-3px)}
+  .stage .label{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:1px;
+    text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .stage .count{margin-left:auto;font-size:12px;color:var(--mute)}
+  .stage .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .stage.done{border-top:3px solid var(--done)} .stage.done .label{color:var(--done)} .stage.done .dot{background:var(--done)}
+  .stage.now{border-top:3px solid var(--now)} .stage.now .label{color:var(--now)} .stage.now .dot{background:var(--now)}
+  .stage.next{border-top:3px solid var(--next)} .stage.next .label{color:var(--next)} .stage.next .dot{background:var(--next)}
+  .chips{display:flex;flex-direction:column;gap:6px}
+  .chip{font-size:12px;color:var(--bone);background:var(--panel2);border:1px solid var(--line);
+    border-radius:8px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip.more{color:var(--mute);border-style:dashed}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:24px;padding:0 6px}
+
+  /* ---- detail sections ---- */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .card.full{grid-column:1 / -1}
+  .card h2{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:1px;
+    text-transform:uppercase;margin:0 0 10px;color:var(--gold)}
+  ul{margin:0;padding-left:18px} li{margin:4px 0}
+  .tldr{font-size:15px;line-height:1.6;color:var(--bone);background:var(--panel);
+    border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:14px 16px;margin:22px 0}
+  .dec{margin:6px 0} .dec b{color:var(--bone)} .dec .why{color:var(--mute)}
+  .files code{color:var(--gold);font-size:12.5px} .files .c{color:var(--mute)}
+  .ol{counter-reset:n;list-style:none;padding-left:0}
+  .ol li{counter-increment:n;padding-left:30px;position:relative;margin:7px 0}
+  .ol li::before{content:counter(n);position:absolute;left:0;top:0;width:20px;height:20px;
+    background:var(--next);color:#0B0B0D;border-radius:50%;font-weight:700;font-size:11px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--disp)}
+
+  /* ---- resume prompt (for the next agent) ---- */
+  .resume{margin-top:26px;background:#0f0f12;border:1px solid var(--gold-dim);border-radius:14px;overflow:hidden}
+  .resume .bar{display:flex;align-items:center;gap:10px;padding:11px 16px;background:#171510;border-bottom:1px solid var(--line)}
+  .resume .bar .t{font-family:var(--disp);font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold);font-size:14px}
+  .resume .bar .hint{color:var(--mute);font-size:11px;margin-left:auto}
+  .copy{background:var(--gold);color:#0B0B0D;border:0;border-radius:7px;padding:5px 12px;
+    font-family:var(--disp);font-weight:700;letter-spacing:.5px;cursor:pointer;font-size:12px}
+  .copy:active{transform:scale(.96)}
+  pre{margin:0;padding:16px;white-space:pre-wrap;word-break:break-word;color:var(--bone);font-size:13px;line-height:1.6}
+  .foot{color:var(--mute);font-size:11px;text-align:center;margin-top:30px}
+  @media(max-width:760px){
+    h1{font-size:32px}
+    .flow{grid-template-columns:1fr;gap:10px}
+    .arrow{transform:rotate(90deg);padding:2px 0}
+    .grid{grid-template-columns:1fr}
+  }
+</style>
+<!--HANDOFF-META {"status":"active","app":"hookfight-arena","lastTouched":"2026-06-02"} HANDOFF-META-->
+</head>
+<body>
+  <h1>Handoff · <span class="sub">HookFight Arena Day 1</span></h1>
+  <div class="meta"><b>HookFight Arena (Build #1 of the Manus 7-app slate)</b> · <span>~/My Apps/hookfight-arena</span></div>
+  <div class="meta">2026-06-02 &nbsp;·&nbsp; <span class="badge ">In progress</span></div>
+  <div class="goldline"></div>
+
+  <div class="tldr">Scaffolded HookFight Arena — Build #1 that forges the shared chassis (Next.js 16 + Convex + Convex Auth + Stripe + runAI router + OG cards) every later web app copies-and-skins. Day 1 done &amp; verified: schema, 4 personas, pure bracket logic (6/6 tests), runAI router with stub-mode, /new form + landing. pnpm build green. Backend wiring deferred — needs Drey's Convex login.</div>
+
+  <div class="legend">&rsaquo; The shape of it — read left to right</div>
+  <div class="flow">
+    <div class="stage done">
+      <div class="label"><span class="dot"></span>Done <span class="count">10</span></div>
+      <div class="chips"><div class="chip">Scaffolded Next.js 16 (App Router, Turbopack) + TS + Tailwind 4 base</div><div class="chip">convex/schema.ts — 6 typed tables (users/battles/hooks/personaVotes/rewrites/shareCards), no v.any()</div><div class="chip">convex/personas.ts — 4 hand-tuned audience personas (Skimmer/Skeptic/Sharer/Buyer) + scoring rubric</div><div class="chip more">+7 more</div></div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="stage now">
+      <div class="label"><span class="dot"></span>Now <span class="count">3</span></div>
+      <div class="chips"><div class="chip">Local git repo, 2 commits on top of create-next-app init, NO remote yet (not pushed)</div><div class="chip">Dev server STOPPED (was verified live at localhost:3000; landing + /new form fully work with zero keys)</div><div class="chip">No backend deployed — Convex not provisioned, no Clerk/AI/Stripe keys wired</div></div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="stage next">
+      <div class="label"><span class="dot"></span>Next <span class="count">6</span></div>
+      <div class="chips"><div class="chip">Run `pnpm convex` in ~/My Apps/hookfight-arena — logs Drey in, provisions dev DB, deploys the schema (codegen creates convex/_generated)</div><div class="chip">Install + wire Convex Auth: `@convex-dev/auth` — middleware goes in proxy.ts (Next16 renamed middleware-&gt;proxy), use convexAuthNextjsMiddleware; cookies/headers/params are async now</div><div class="chip">Add AI + Stripe TEST keys to .env.local (template annotated in .env.example)</div><div class="chip more">+3 more</div></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><h2>What Was Done</h2><ul><li>Scaffolded Next.js 16 (App Router, Turbopack) + TS + Tailwind 4 base</li><li>convex/schema.ts — 6 typed tables (users/battles/hooks/personaVotes/rewrites/shareCards), no v.any()</li><li>convex/personas.ts — 4 hand-tuned audience personas (Skimmer/Skeptic/Sharer/Buyer) + scoring rubric</li><li>convex/bracket.ts — pure single-elimination bracket from scores, $0 AI; 6/6 unit tests pass (test/bracket.test.ts)</li><li>convex/runAI.ts — THE chassis: one model router, Zod-validated JSON, retry-once, stub-mode when no key</li><li>convex/aiSchemas.ts — Zod schemas for all 3 AI calls (scoring/rewrites/caption)</li><li>src/app/page.tsx landing + static demo bracket; src/app/new/page.tsx battle setup form (verified live in Safari)</li><li>Removed Clerk, swapped to Convex Auth (Drey doesn't use Clerk); schema clerkId -&gt; authUserId</li><li>README + CHANGELOG + annotated .env.example; deps pinned exact; Turbopack root pinned</li><li>pnpm build green (typecheck+lint+compile); committed ee9fbd1 (scaffold) + 01595c4 (drop Clerk)</li></ul></div>
+    <div class="card"><h2>Current State</h2><ul><li>Local git repo, 2 commits on top of create-next-app init, NO remote yet (not pushed)</li><li>Dev server STOPPED (was verified live at localhost:3000; landing + /new form fully work with zero keys)</li><li>No backend deployed — Convex not provisioned, no Clerk/AI/Stripe keys wired</li></ul></div>
+    <div class="card full"><h2>What's Next <span style="font-size:11px;color:var(--mute);font-weight:400">(ordered — start at 1)</span></h2><ul class="ol"><li>Run `pnpm convex` in ~/My Apps/hookfight-arena — logs Drey in, provisions dev DB, deploys the schema (codegen creates convex/_generated)</li><li>Install + wire Convex Auth: `@convex-dev/auth` — middleware goes in proxy.ts (Next16 renamed middleware-&gt;proxy), use convexAuthNextjsMiddleware; cookies/headers/params are async now</li><li>Add AI + Stripe TEST keys to .env.local (template annotated in .env.example)</li><li>Day 2: create-battle mutation (burn 1 credit) + persona-scoring call via runAI + compute bracket + results screen (winner, per-persona scores, why-it-won, 3 rewrites)</li><li>Day 3: next/og share card + public /b/&lt;slug&gt; page + 'Run your own hooks' loop; credit-metering (3/day + reset cron); Stripe Checkout ($9 Pro) + signed webhook -&gt; flip users.plan; deploy to Vercel + post launch tweet</li><li>Full Day 2-3 spec lives in ~/Desktop/manus-burn-20260602/frivolous/PLAN.md</li></ul></div>
+    <div class="card"><h2>Key Decisions</h2><div class="dec">• <b>Convex Auth instead of Clerk</b><br><span class="why">↳ Drey doesn't use Clerk; Convex Auth is the stack standard, built-in, no third-party auth service. Auth wasn't wired yet so it was a clean swap.</span></div><div class="dec">• <b>runAI() stub-mode when AI_API_KEY unset</b><br><span class="why">↳ Lets the entire free loop be built + demoed before any key exists; flip key on and the real model takes over with zero code change.</span></div><div class="dec">• <b>Bracket as a pure function (no AI, no DB)</b><br><span class="why">↳ Makes it the one piece I could actually unit-test (6/6), and keeps AI cost at $0 for the tournament step.</span></div><div class="dec">• <b>No @vercel/og dependency</b><br><span class="why">↳ Next 16 ships next/og built in.</span></div><div class="dec">• <b>Pinned Turbopack root in next.config.ts</b><br><span class="why">↳ A stray ~/package-lock.json was hijacking Next's inferred workspace root.</span></div></div>
+    <div class="card"><h2>Gotchas</h2><ul><li>Next 16 ships its own AGENTS.md warning APIs differ from training data — read node_modules/next/dist/docs/ before app-router code. Confirmed: middleware.ts -&gt; proxy.ts.</li><li>No Chrome on this Mac — screenshots done via Safari window-id capture (screencapture -l &lt;id&gt;); Safari blocks JS-from-AppleEvents by default.</li><li>convex/_generated does NOT exist until `pnpm convex` runs — convex query/mutation/action files referencing ./_generated/api will not typecheck until then (Day-1 files deliberately avoid those imports).</li><li>Repo has no remote; if pushing, create one + verify .env.local stays gitignored (only .env.example is committed via a !.env.example negation).</li></ul></div>
+    <div class="card full files"><h2>Files Touched</h2><ul><li><code>convex/schema.ts</code> <span class="c">— NEW — 6 typed tables, users.authUserId</span></li><li><code>convex/personas.ts</code> <span class="c">— NEW — 4 personas + rubric</span></li><li><code>convex/bracket.ts</code> <span class="c">— NEW — pure single-elim bracket</span></li><li><code>convex/runAI.ts</code> <span class="c">— NEW — model router + stub mode</span></li><li><code>convex/aiSchemas.ts</code> <span class="c">— NEW — Zod schemas for AI output</span></li><li><code>src/app/new/page.tsx</code> <span class="c">— NEW — battle setup form</span></li><li><code>src/app/page.tsx</code> <span class="c">— rewrote default -&gt; landing + demo bracket</span></li><li><code>src/lib/constants.ts + src/lib/parseHooks.ts</code> <span class="c">— NEW — platforms/audiences/starters + hook parser</span></li><li><code>test/bracket.test.ts</code> <span class="c">— NEW — 6 passing tests</span></li><li><code>README.md / CHANGELOG.md / .env.example</code> <span class="c">— NEW/rewritten — docs + env template</span></li></ul></div>
+  </div>
+
+  <div class="resume">
+    <div class="bar">
+      <span class="t">&rsaquo; Resume Prompt</span>
+      <span class="hint">paste into a fresh session — gives the next Claude everything</span>
+      <button class="copy" onclick="cp(this)">Copy</button>
+    </div>
+    <pre id="rp">I'm resuming HookFight Arena (Build #1 of the Manus 7-app slate). Read ~/Desktop/HANDOFF-HOOKFIGHT-ARENA-DAY-1-20260602.html for full context, and ~/Desktop/manus-burn-20260602/frivolous/PLAN.md for the Day 2-3 spec. The project is at ~/My Apps/hookfight-arena (Next 16 + Convex + Convex Auth, NOT Clerk). Day 1 scaffold is committed and pnpm build is green. START with: run `pnpm convex` to log in + provision the dev DB + deploy the schema, then install and wire Convex Auth (@convex-dev/auth) with convexAuthNextjsMiddleware in proxy.ts. Then build the create-battle mutation + persona-scoring call via runAI() + the results screen.</pre>
+  </div>
+
+  <div class="foot">Generated Jun 2, 2026, 2:56 PM · single-file handoff · /handoff</div>
+<script>
+  function cp(b){var t=document.getElementById('rp').innerText;
+    navigator.clipboard.writeText(t).then(function(){var o=b.innerText;b.innerText='Copied';setTimeout(function(){b.innerText=o},1400)})}
+</script>
+</body>
+</html>
